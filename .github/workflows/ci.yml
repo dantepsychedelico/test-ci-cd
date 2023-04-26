@@ -24,6 +24,7 @@ jobs:
         run: |
           mkdir -p release
           IS_VALID=1
+          set
           for FILE in deploy/*.yaml;
           do
             envsubst < $FILE > release/$(basename $FILE)
