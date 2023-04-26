@@ -10,7 +10,7 @@ env:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     container:
       image: google/cloud-sdk:alpine
     env:
@@ -33,6 +33,7 @@ jobs:
               [ -z $(set | grep -E "^${var}=") ] && echo "NOT FOUND $var" && IS_VALID=0
             done
           done
+          sleep 600
           [ "$IS_VALID" = 0 ] && exit 1
           cd release
           zip -r $RELEASE_BUNDLE_FILE *.yaml
