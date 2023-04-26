@@ -1,0 +1,5 @@
+namespace: $K8S_NAMESPACE
+params:
+  STAGE: $STAGE  
+  SCRECT: $SECRET
+  IMAGE: $DOCKER_IMAGE

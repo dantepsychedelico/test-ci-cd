@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKER_IMAGE: "${{ vars.GCR_IMAGE_URL }}/${{ github.event.repository.name }}:${{ github.sha }}"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    container:
+      image: google/cloud-sdk:alpine
+    env:
+      RELEASE_BUNDLE_FILE: "${{ github.event.repository.name }}-$STAGE.zip"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: apk add gettext zip
+      - name: Bundle k8s yaml
+        run: |
+          mkdir -p release
+          IS_VALID=1
+          for FILE in deploy/*.yaml;
+          do
+            envsubst < $FILE > release/$(basename $FILE)
+            for var in $(grep -o '[$]{[a-zA-Z0-9_]*}' $FILE | uniq | sed 's/[\${}]//g');
+            do
+              [ -z $(set | grep -E "^${var}=") ] && echo "NOT FOUND $var" && IS_VALID=0
+            done
+          done
+          [ "$IS_VALID" = 0 ] && exit 1
+          cd release
+          zip -r $RELEASE_BUNDLE_FILE *.yaml
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: store release folder
+          path: release
